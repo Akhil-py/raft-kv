@@ -75,6 +75,13 @@ Inspired by etcd, Consul, and TiKV, this implementation prioritizes correctness,
 
 ---
 
+## Resources
+
+https://raft.github.io/
+https://www.youtube.com/watch?v=ro2fU8_mr2w&t=654s
+
+---
+
 ## 📄 License
 
 MIT
