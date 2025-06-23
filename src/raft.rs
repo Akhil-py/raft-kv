@@ -2,27 +2,28 @@
 
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
-use rand::Rng;
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 
-enum Role {
+pub enum Role {
     Follower,
     Candidate,
     Leader,
 }
 
-struct LogEntry {
-    term: u64,
-    command: String,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LogEntry {
+    pub term: u64,
+    pub command: String,
 }
 
-struct RaftState {
-    current_term: u64,
-    voted_for: Option<String>,
-    votes_received: u64,
-    peers: HashMap<String, String>,
-    role: Role,
-    commit_index: u64,
-    last_applied: u64,
-    log: Vec<LogEntry>,
+pub struct RaftState {
+    pub current_term: u64,
+    pub voted_for: Option<String>,
+    pub votes_received: u64,
+    pub peers: HashMap<String, String>,
+    pub role: Role,
+    pub commit_index: u64,
+    pub last_applied: u64,
+    pub log: Vec<LogEntry>,
 }
