@@ -19,3 +19,22 @@ async fn handle_request_vote(req: RequestVote) -> Result<impl warp::Reply, warp:
     };
     Ok(warp::reply::json(&response))
 }
+
+/// POST /raft/append_entries
+pub fn append_entries_filter() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("raft" / "append_entries")
+        .and(warp::post())
+        .and(warp::body::json())
+        .and_then(handle_append_entries)
+}
+
+/// Handle AppendEntries RPC
+async fn handle_append_entries(req: AppendEntries) -> Result<impl warp::Reply, warp::Rejection> {
+    // TODO: Replace with real Raft append logic
+    let response = AppendEntriesResponse {
+        term: req.term,
+        success: true, // Dummy: always succeed
+        match_index: 0,
+    };
+    Ok(warp::reply::json(&response))
+}
