@@ -90,7 +90,27 @@ pub fn append_entries_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extrac
 /// TODO: Replace dummy logic with real Raft log replication and consistency checks.
 async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut raft = state.lock().unwrap();
-    // TODO: Implement real append logic here
+    
+    // TODO: Term and leader validation
+    if req.term < raft.current_term {
+        // Outdated term, reject
+        return Ok(warp::reply::json(&AppendEntriesResponse {
+            term: raft.current_term,
+            success: false,
+            match_index: 0,
+        }));
+    }
+
+    // TODO: Log consistency checks
+
+    // TODO: Append entries to log
+
+    // TODO: Update commit index
+
+    // TODO: Apply entries to state machine
+
+    // TODO: Respond to leader
+
     let response = AppendEntriesResponse {
         term: raft.current_term,
         success: true, // Dummy: always succeed
