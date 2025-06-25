@@ -127,13 +127,13 @@ async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>)
     }
 
     // TODO: Apply entries to state machine
+    // raft.apply_entries(); // Placeholder for applying log entries to state machine
 
-    // TODO: Respond to leader
-
+    // Respond to leader
     let response = AppendEntriesResponse {
         term: raft.current_term,
-        success: true, // Dummy: always succeed
-        match_index: 0,
+        success: true,
+        match_index: raft.log.len() as u64 - 1, // Return the last index of the log
     };
     Ok(warp::reply::json(&response))
 }
