@@ -22,17 +22,39 @@ Modern distributed systems require consistent, fault-tolerant state replication.
 - **Roles**: Follower, Candidate, Leader (Raft roles)
 - **Communication**: Warp-based HTTP endpoints for Raft RPCs and client API
 - **Concurrency**: Tokio async runtime for scalable, non-blocking IO
-- **State Machine**: In-memory KV store, updated via Raft log application
+- **State Machine**: In-memory KV store, updated via Raft log application (in progress)
 - **Persistence**: (Planned) Write-ahead log and snapshotting for durability
 
 ---
 
-## Design Principles & Amazon Leadership Alignment
-- **Customer Obsession**: Prioritizes correctness, reliability, and clear APIs
-- **Ownership**: Built from scratch, no third-party Raft libraries
-- **Insist on the Highest Standards**: Rigorous testing, modularity, and code clarity
-- **Bias for Action**: Fast iteration with a clear, testable MVP
-- **Learn and Be Curious**: Inspired by industry leaders, with a focus on educational value
+## Current Progress
+- [x] Project setup with Rust, Tokio, Warp, Serde, and modular structure
+- [x] Config parsing and node startup
+- [x] Raft state struct and log entry struct (with serialization)
+- [x] RPC message structs for Raft (RequestVote, AppendEntries, etc.)
+- [x] HTTP endpoints for Raft RPCs (RequestVote, AppendEntries)
+- [x] Outbound RPC logic for sending RequestVote
+- [x] Shared state management with Arc<Mutex<RaftState>>
+- [x] Health check endpoint
+- [x] Basic cluster bootstrapping
+- [ ] Real Raft voting logic in handle_request_vote (in progress)
+- [ ] Log replication/consistency in handle_append_entries
+- [ ] Leader election, term management, state transitions
+- [ ] Heartbeat and election timers (Tokio tasks)
+- [ ] Apply committed log entries to the key-value store
+- [ ] Client API for KV operations (set/get/delete)
+- [ ] Forwarding client requests to the leader
+- [ ] Persistence (WAL, snapshots) for durability
+- [ ] Integration/fault tolerance tests, partition simulation
+
+---
+
+## Engineering & Leadership Principles
+- **Customer Obsession:** Delivering correctness, reliability, and clear, intuitive APIs for end users and developers.
+- **Ownership:** Built entirely in-house, with no reliance on third-party Raft libraries, ensuring full control and deep understanding.
+- **Highest Standards:** Emphasizing rigorous testing, modular design, and code clarity to enable maintainability and scalability.
+- **Bias for Action:** Rapid iteration and delivery of a minimal, testable, and extensible MVP.
+- **Learn and Be Curious:** Continuously inspired by industry leaders, with a focus on learning, innovation, and sharing knowledge.
 
 ---
 
@@ -58,12 +80,13 @@ curl localhost:8001/health
 ---
 
 ## Roadmap / Next Steps
-- [ ] AppendEntries and RequestVote endpoints
-- [ ] Log persistence (file-based WAL)
-- [ ] Snapshotting and log compaction
-- [ ] Node join/leave API
-- [ ] Fault tolerance testing (partition simulation)
-- [ ] Prometheus-compatible metrics
+- [ ] Complete real Raft voting logic and log consistency checks
+- [ ] Implement leader election and heartbeat timers
+- [ ] Apply committed log entries to the in-memory key-value store
+- [ ] Expose client API for KV operations (set/get/delete)
+- [ ] Add persistence (WAL, snapshots) for durability
+- [ ] Add integration and fault tolerance tests
+- [ ] Implement cluster membership changes and metrics (optional)
 
 ---
 
