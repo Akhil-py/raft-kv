@@ -25,6 +25,30 @@ pub fn request_vote_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extract 
 async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut raft = state.lock().unwrap();
     // TODO: Implement real vote logic here
+
+    // Check candidate's term
+    if req.term < raft.current_term {
+        // Candidate's term is outdated, reject vote
+        return Ok(warp::reply::json(&VoteResponse {
+            term: raft.current_term,
+            vote_granted: false,
+        }));
+    }
+    
+    // Update term and step down if necessary
+    
+
+    // Check if already voted for someone else in this term
+    
+
+    // Check log consistency:
+    // - If candidate's log is at least as up-to-date as this node's log
+    // - Compare last log index and term
+
+    // Grant or deny the vote based on the above checks
+
+
+    // End of TODO: This is a placeholder implementation
     let response = VoteResponse {
         term: raft.current_term,
         vote_granted: true, // Dummy: always grant vote
