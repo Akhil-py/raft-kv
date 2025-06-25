@@ -102,6 +102,15 @@ async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>)
     }
 
     // TODO: Log consistency checks
+    if req.prev_log_index >= raft.log.len() as u64 || 
+       (req.prev_log_index > 0 && raft.log[req.prev_log_index as usize - 1].term != req.prev_log_term) {
+        // Previous log entry mismatch, reject
+        return Ok(warp::reply::json(&AppendEntriesResponse {
+            term: raft.current_term,
+            success: false,
+            match_index: 0,
+        }));
+    }
 
     // TODO: Append entries to log
 
