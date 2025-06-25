@@ -44,7 +44,13 @@ async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> 
     }
 
     // Check if already voted for someone else in this term
-    
+    if raft.voted_for.is_some() && raft.voted_for != Some(req.candidate_id.clone()) {
+        // Already voted for another candidate, reject
+        return Ok(warp::reply::json(&VoteResponse {
+            term: raft.current_term,
+            vote_granted: false,
+        }));
+    }
 
     // Check log consistency:
     // - If candidate's log is at least as up-to-date as this node's log
