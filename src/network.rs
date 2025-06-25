@@ -36,7 +36,12 @@ async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> 
     }
     
     // Update term and step down if necessary
-    
+    if req.term > raft.current_term {
+        raft.current_term = req.term;
+        raft.voted_for = None;
+        raft.role = crate::raft::Role::Follower;
+        raft.votes_received = 0;
+    }
 
     // Check if already voted for someone else in this term
     
