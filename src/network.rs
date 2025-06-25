@@ -21,7 +21,6 @@ pub fn request_vote_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extract 
 
 /// Handler for incoming RequestVote RPCs.
 /// Locks Raft state, processes the vote request, and returns a VoteResponse.
-/// TODO: Replace dummy logic with real Raft voting rules.
 async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut raft = state.lock().unwrap();
 
@@ -51,22 +50,30 @@ async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> 
         }));
     }
 
-    // TODO: Check log consistency:
-    // - If candidate's log is at least as up-to-date as this node's log
-    // - Compare last log index and term
+    // Check log consistency:
+    if req.last_log_index < raft.log.len() as u64 {
+        // Candidate's log is not up-to-date, reject
+        return Ok(warp::reply::json(&VoteResponse {
+            term: raft.current_term,
+            vote_granted: false,
+        }));
+    }
 
-
-    // TODO: Grant or deny the vote based on the above checks
-
+    // Grant or deny the vote based on the above checks
+    let vote_granted = if let Some(voted_for) = &raft.voted_for {
+        voted_for == &req.candidate_id
+    } else {
+        true
+    };
 
     let response = VoteResponse {
         term: raft.current_term,
-        vote_granted: true, // Dummy: always grant vote
+        vote_granted,
     };
     Ok(warp::reply::json(&response))
 }
 
-// POST /raft/append_entries
+/// POST /raft/append_entries
 /// Returns a Warp filter for handling incoming AppendEntries RPCs.
 /// Injects shared Raft state into the handler for safe, concurrent access.
 pub fn append_entries_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
