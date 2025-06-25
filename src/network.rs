@@ -120,7 +120,11 @@ async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>)
         raft.log.push(entry);
     }
 
-    // TODO: Update commit index
+    // Update commit index
+    if req.leader_commit > raft.commit_index {
+        // Update commit index to the minimum of leader's commit and last log index
+        raft.commit_index = req.leader_commit.min(raft.log.len() as u64 - 1);
+    }
 
     // TODO: Apply entries to state machine
 
