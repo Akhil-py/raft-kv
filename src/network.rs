@@ -91,7 +91,7 @@ pub fn append_entries_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extrac
 async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut raft = state.lock().unwrap();
     
-    // TODO: Term and leader validation
+    // Term and leader validation
     if req.term < raft.current_term {
         // Outdated term, reject
         return Ok(warp::reply::json(&AppendEntriesResponse {
@@ -101,7 +101,7 @@ async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>)
         }));
     }
 
-    // TODO: Log consistency checks
+    // Log consistency checks
     if req.prev_log_index >= raft.log.len() as u64 || 
        (req.prev_log_index > 0 && raft.log[req.prev_log_index as usize - 1].term != req.prev_log_term) {
         // Previous log entry mismatch, reject
@@ -112,7 +112,13 @@ async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>)
         }));
     }
 
-    // TODO: Append entries to log
+    // Append new entries to log
+    if req.prev_log_index + 1 < raft.log.len() as u64 {
+        raft.log.truncate(req.prev_log_index as usize + 1);
+    }
+    for entry in req.entries {
+        raft.log.push(entry);
+    }
 
     // TODO: Update commit index
 
