@@ -66,6 +66,10 @@ async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> 
         true
     };
 
+    if vote_granted {
+        raft.voted_for = Some(req.candidate_id.clone());
+    }
+
     let response = VoteResponse {
         term: raft.current_term,
         vote_granted,
