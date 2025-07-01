@@ -26,4 +26,5 @@ pub struct RaftState {
     pub commit_index: u64, // Index of the highest log entry known to be committed
     pub last_applied: u64, // Index of the highest log entry applied to state machine
     pub log: Vec<LogEntry>, // Log entries for this node, ordered by index
+    pub kv_store: HashMap<String, String>, // The actual key-value store (state machine)
 }
