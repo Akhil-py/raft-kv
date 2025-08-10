@@ -23,58 +23,8 @@ pub fn request_vote_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extract 
 /// Locks Raft state, processes the vote request, and returns a VoteResponse.
 async fn handle_request_vote(req: RequestVote, state: Arc<Mutex<RaftState>>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut raft = state.lock().unwrap();
-
-    // Check candidate's term
-    if req.term < raft.current_term {
-        // Candidate's term is outdated, reject vote
-        return Ok(warp::reply::json(&VoteResponse {
-            term: raft.current_term,
-            vote_granted: false,
-        }));
-    }
-    
-    // Update term and step down if necessary
-    if req.term > raft.current_term {
-        raft.current_term = req.term;
-        raft.voted_for = None;
-        raft.role = crate::raft::Role::Follower;
-        raft.votes_received = 0;
-    }
-
-    // Check if already voted for someone else in this term
-    if raft.voted_for.is_some() && raft.voted_for != Some(req.candidate_id.clone()) {
-        // Already voted for another candidate, reject
-        return Ok(warp::reply::json(&VoteResponse {
-            term: raft.current_term,
-            vote_granted: false,
-        }));
-    }
-
-    // Check log consistency:
-    if req.last_log_index < raft.log.len() as u64 {
-        // Candidate's log is not up-to-date, reject
-        return Ok(warp::reply::json(&VoteResponse {
-            term: raft.current_term,
-            vote_granted: false,
-        }));
-    }
-
-    // Grant or deny the vote based on the above checks
-    let vote_granted = if let Some(voted_for) = &raft.voted_for {
-        voted_for == &req.candidate_id
-    } else {
-        true
-    };
-
-    if vote_granted {
-        raft.voted_for = Some(req.candidate_id.clone());
-    }
-
-    let response = VoteResponse {
-        term: raft.current_term,
-        vote_granted,
-    };
-    Ok(warp::reply::json(&response))
+    let resp = raft.process_request_vote(&req);
+    Ok(warp::reply::json(&resp))
 }
 
 /// POST /raft/append_entries
@@ -94,52 +44,8 @@ pub fn append_entries_filter(state: Arc<Mutex<RaftState>>) -> impl Filter<Extrac
 /// TODO: Replace dummy logic with real Raft log replication and consistency checks.
 async fn handle_append_entries(req: AppendEntries, state: Arc<Mutex<RaftState>>) -> Result<impl warp::Reply, warp::Rejection> {
     let mut raft = state.lock().unwrap();
-    
-    // Term and leader validation
-    if req.term < raft.current_term {
-        // Outdated term, reject
-        return Ok(warp::reply::json(&AppendEntriesResponse {
-            term: raft.current_term,
-            success: false,
-            match_index: 0,
-        }));
-    }
-
-    // Log consistency checks
-    if req.prev_log_index >= raft.log.len() as u64 || 
-       (req.prev_log_index > 0 && raft.log[req.prev_log_index as usize - 1].term != req.prev_log_term) {
-        // Previous log entry mismatch, reject
-        return Ok(warp::reply::json(&AppendEntriesResponse {
-            term: raft.current_term,
-            success: false,
-            match_index: 0,
-        }));
-    }
-
-    // Append new entries to log
-    if req.prev_log_index + 1 < raft.log.len() as u64 {
-        raft.log.truncate(req.prev_log_index as usize + 1);
-    }
-    for entry in req.entries {
-        raft.log.push(entry);
-    }
-
-    // Update commit index
-    if req.leader_commit > raft.commit_index {
-        // Update commit index to the minimum of leader's commit and last log index
-        raft.commit_index = req.leader_commit.min(raft.log.len() as u64 - 1);
-    }
-
-    // TODO: Apply entries to state machine
-    // raft.apply_entries(); // Placeholder for applying log entries to state machine
-
-    // Respond to leader
-    let response = AppendEntriesResponse {
-        term: raft.current_term,
-        success: true,
-        match_index: raft.log.len() as u64 - 1, // Return the last index of the log
-    };
-    Ok(warp::reply::json(&response))
+    let resp = raft.process_append_entries(&req);
+    Ok(warp::reply::json(&resp))
 }
 
 /// Outbound RPC: Sends a RequestVote to a peer node and awaits a VoteResponse.
